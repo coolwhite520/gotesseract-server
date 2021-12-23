@@ -35,13 +35,11 @@ RUN apt-get install -y -qq \
 # If you want to download these traineddata via `wget`, don't forget to locate
 # downloaded traineddata under ${TESSDATA_PREFIX}/tessdata.
 
-
-
 WORKDIR /go/src/app
 ADD . /go/src/app
 RUN go env -w GO111MODULE=on
 RUN go mod tidy
-
+EXPOSE 9090
 CMD go run main.go
 #RUN /go/src
 #RUN cd ${GOPATH}/src/github.com/otiai10/gosseract && go test

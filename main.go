@@ -2,14 +2,63 @@ package main
 
 import (
 	"fmt"
+	"github.com/kataras/iris/v12"
 	"github.com/otiai10/gosseract/v2"
+	"io"
+	"os"
+	"path"
+	"strconv"
+	"time"
 )
 
+
+
 func main() {
-	client := gosseract.NewClient()
-	defer client.Close()
-	client.SetImage("./a.jpg")
-	text, _ := client.Text()
-	fmt.Println(text)
-	// Hello, World!
+	app := iris.Default()
+	os.MkdirAll("./uploads", 0777)
+	app.Post("/upload", func(ctx iris.Context) {
+		client := gosseract.NewClient()
+		client.SetLanguage("eng", "deu", "jpn", "chi_sim")
+		defer client.Close()
+		file, info, err := ctx.FormFile("image")
+		if err != nil {
+			ctx.JSON(map[string]interface{}{
+				"code": -100,
+				"msg": err.Error(),
+				"content": "",
+			})
+			return
+		}
+		defer file.Close()
+		newFilename := strconv.Itoa(int(time.Now().UnixNano())) + path.Ext(info.Filename)
+		filePathName := fmt.Sprintf("./uploads/%s", newFilename)
+		out, err := os.OpenFile(filePathName, os.O_WRONLY|os.O_CREATE, 0777)
+		if err != nil {
+			ctx.JSON(map[string]interface{}{
+				"code": -100,
+				"msg": err.Error(),
+				"content": "",
+			})
+			return
+		}
+		defer out.Close()
+		io.Copy(out, file)
+		client.SetImage(filePathName)
+		text, err := client.Text()
+		os.Remove(filePathName)
+		if err != nil {
+			ctx.JSON(map[string]interface{}{
+				"code": -100,
+				"msg": err.Error(),
+				"content": "",
+			})
+			return
+		}
+		ctx.JSON(map[string]interface{}{
+			"code": 200,
+			"content": text,
+		})
+
+	})
+	app.Run(iris.Addr(":9090"))
 }
