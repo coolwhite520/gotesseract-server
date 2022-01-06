@@ -15,10 +15,16 @@ import (
 
 func main() {
 	app := iris.Default()
-	os.MkdirAll("./uploads", 0777)
+	os.MkdirAll("./uploads", 0666)
 	app.Post("/upload", func(ctx iris.Context) {
 		client := gosseract.NewClient()
-		client.SetLanguage("eng", "deu", "jpn", "chi_sim")
+		// lang 简称
+		lang := ctx.FormValue("lang")
+		//client.SetLanguage("eng", "deu", "jpn", "chi_sim")
+		err := client.SetLanguage(lang)
+		if err != nil {
+			client.SetLanguage("eng")
+		}
 		defer client.Close()
 		file, info, err := ctx.FormFile("image")
 		if err != nil {
