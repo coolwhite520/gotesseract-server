@@ -1,68 +1,85 @@
 package main
 
 import (
-	"fmt"
 	"github.com/kataras/iris/v12"
 	"github.com/otiai10/gosseract/v2"
-	"io"
-	"os"
-	"path"
-	"strconv"
-	"time"
 )
 
-
+type ResLine struct {
+	Left    int    `json:"left"`
+	Top     int    `json:"top"`
+	Right   int    `json:"right"`
+	Bottom  int    `json:"bottom"`
+	Content string `json:"content"`
+}
+type ResLines []ResLine
 
 func main() {
 	app := iris.Default()
-	os.MkdirAll("./uploads", 0666)
+	client := gosseract.NewClient()
+	defer client.Close()
 	app.Post("/upload", func(ctx iris.Context) {
-		client := gosseract.NewClient()
-		// lang 简称
-		lang := ctx.FormValue("lang")
+		type ReqBody struct {
+			Lang     string `json:"lang"`
+			FilePath string `json:"file_path"`
+		}
+		var req ReqBody
+		err := ctx.ReadJSON(&req)
+		if err != nil {
+			ctx.JSON(map[string]interface{}{
+				"code": -100,
+				"msg":  err.Error(),
+			})
+			return
+		}
 		//client.SetLanguage("eng", "deu", "jpn", "chi_sim")
-		err := client.SetLanguage(lang)
+		err = client.SetLanguage(req.Lang)
 		if err != nil {
-			client.SetLanguage("eng")
+			err = client.SetLanguage("eng")
+			if err != nil {
+				ctx.JSON(map[string]interface{}{
+					"code": -100,
+					"msg":  err.Error(),
+				})
+				return
+			}
 		}
-		defer client.Close()
-		file, info, err := ctx.FormFile("image")
+
+		err = client.SetImage(req.FilePath)
 		if err != nil {
 			ctx.JSON(map[string]interface{}{
 				"code": -100,
-				"msg": err.Error(),
-				"content": "",
+				"msg":  err.Error(),
 			})
 			return
 		}
-		defer file.Close()
-		newFilename := strconv.Itoa(int(time.Now().UnixNano())) + path.Ext(info.Filename)
-		filePathName := fmt.Sprintf("./uploads/%s", newFilename)
-		out, err := os.OpenFile(filePathName, os.O_WRONLY|os.O_CREATE, 0777)
+		boxes, err := client.GetBoundingBoxes(2)
 		if err != nil {
 			ctx.JSON(map[string]interface{}{
 				"code": -100,
-				"msg": err.Error(),
-				"content": "",
+				"msg":  err.Error(),
 			})
 			return
 		}
-		defer out.Close()
-		io.Copy(out, file)
-		client.SetImage(filePathName)
-		text, err := client.Text()
-		os.Remove(filePathName)
-		if err != nil {
-			ctx.JSON(map[string]interface{}{
-				"code": -100,
-				"msg": err.Error(),
-				"content": "",
-			})
-			return
+		var lines ResLines
+		for _, v := range boxes {
+			left := v.Box.Min.X
+			top := v.Box.Max.Y
+			right := v.Box.Max.X
+			bottom := v.Box.Min.Y
+			line := ResLine{
+				Left:    left,
+				Top:     top,
+				Right:   right,
+				Bottom:  bottom,
+				Content: v.Word,
+			}
+			lines = append(lines, line)
 		}
 		ctx.JSON(map[string]interface{}{
 			"code": 200,
-			"content": text,
+			"data": lines,
+			"msg":  "success",
 		})
 
 	})
