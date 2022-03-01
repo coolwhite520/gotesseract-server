@@ -18,10 +18,10 @@ func main() {
 	app := iris.Default()
 	client := gosseract.NewClient()
 	defer client.Close()
-	app.Post("/upload", func(ctx iris.Context) {
+	app.Post("/extract", func(ctx iris.Context) {
 		type ReqBody struct {
 			Lang     string `json:"lang"`
-			FilePath string `json:"file_path"`
+			SrcFile string `json:"src_file"`
 		}
 		var req ReqBody
 		err := ctx.ReadJSON(&req)
@@ -45,7 +45,7 @@ func main() {
 			}
 		}
 
-		err = client.SetImage(req.FilePath)
+		err = client.SetImage(req.SrcFile)
 		if err != nil {
 			ctx.JSON(map[string]interface{}{
 				"code": -100,
