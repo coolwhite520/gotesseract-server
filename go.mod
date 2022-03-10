@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/kataras/iris/v12 v12.1.8
 	github.com/otiai10/gosseract/v2 v2.3.1
+	github.com/signintech/gopdf v0.10.8
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 )
 
@@ -32,6 +33,8 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/moul/http2curl v1.0.0 // indirect
+	github.com/phpdave11/gofpdi v1.0.11 // indirect
+	github.com/pkg/errors v0.8.1 // indirect
 	github.com/ryanuber/columnize v2.1.0+incompatible // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect

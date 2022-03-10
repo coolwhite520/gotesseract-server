@@ -19,22 +19,22 @@ type ResLines []ResLine
 
 var client *gosseract.Client
 
-func init()  {
+func init() {
 	client = gosseract.NewClient()
 }
 
 func main() {
 	app := iris.Default()
-	app.Post("/extract", handleExtract)  // ocr直接抽取文本，并带有坐标位置
-	app.Post("/ocrmypdf", handleOcrPdf)  // 将不可编辑的pdf转为可编辑的
-	app.Post("/ocrmyimg", handleOcrImg)  //  将图片转为可编辑的pdf
+	app.Post("/extract", handleExtract) // ocr直接抽取文本，并带有坐标位置
+	app.Post("/ocrmypdf", handleOcrPdf) // 将不可编辑的pdf转为可编辑的
+	app.Post("/ocrmyimg", handleOcrImg) //  将图片转为可编辑的pdf
 	app.Run(iris.Addr(":9090"))
 }
 
 //
 func handleOcrImg(ctx iris.Context) {
 	type ReqBody struct {
-		Lang     string `json:"lang"`
+		Lang    string `json:"lang"`
 		SrcFile string `json:"src_file"`
 	}
 	var req ReqBody
@@ -47,11 +47,11 @@ func handleOcrImg(ctx iris.Context) {
 		return
 	}
 	cmdLine := fmt.Sprintf("tesseract -l %s %s %s output-prefix pdf", req.Lang, req.SrcFile, req.SrcFile)
-	command := exec.Command("/bin/sh","-c",  cmdLine)
+	command := exec.Command("/bin/sh", "-c", cmdLine)
 	command.Stdout = &bytes.Buffer{}
 	command.Stderr = &bytes.Buffer{}
 	err = command.Run()
-	if err != nil{
+	if err != nil {
 		ctx.JSON(map[string]interface{}{
 			"code": -100,
 			"msg":  command.Stderr.(*bytes.Buffer).String(),
@@ -68,7 +68,7 @@ func handleOcrImg(ctx iris.Context) {
 
 func handleOcrPdf(ctx iris.Context) {
 	type ReqBody struct {
-		Lang     string `json:"lang"`
+		Lang    string `json:"lang"`
 		SrcFile string `json:"src_file"`
 	}
 	var req ReqBody
@@ -82,11 +82,11 @@ func handleOcrPdf(ctx iris.Context) {
 	}
 	outPdfName := fmt.Sprintf("%s.ocr.pdf", req.SrcFile)
 	cmdLine := fmt.Sprintf("ocrmypdf --force-ocr -l %s  %s %s", req.Lang, req.SrcFile, outPdfName)
-	command := exec.Command("/bin/sh","-c",  cmdLine)
+	command := exec.Command("/bin/sh", "-c", cmdLine)
 	command.Stdout = &bytes.Buffer{}
 	command.Stderr = &bytes.Buffer{}
 	err = command.Run()
-	if err != nil{
+	if err != nil {
 		ctx.JSON(map[string]interface{}{
 			"code": -100,
 			"msg":  command.Stderr.(*bytes.Buffer).String(),
@@ -102,7 +102,7 @@ func handleOcrPdf(ctx iris.Context) {
 }
 func handleExtract(ctx iris.Context) {
 	type ReqBody struct {
-		Lang     string `json:"lang"`
+		Lang    string `json:"lang"`
 		SrcFile string `json:"src_file"`
 	}
 	var req ReqBody
